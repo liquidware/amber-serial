@@ -16,20 +16,13 @@
 
 package com.liquidware.networkedserial.app;
 
-import java.io.File;
-import java.io.IOException;
-import android.app.Activity;
-import android.app.KeyguardManager;
-import android.app.KeyguardManager.KeyguardLock;
-import android.content.Context;
+
+import java.io.IOException;// import needed packages
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -37,14 +30,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.liquidware.networkedserial.app.R;
 
+//Main activity (top level)
 public class NetworkedSerialActivity extends SerialPortActivity {
 	private static final String TAG = "NetworkedSerialActivity";
 
-	private static final String mLocalDir = Environment.getExternalStorageDirectory().toString() + "/out";
 	
-	private static final int CMD_SUCCESS  = -1;
-	private static final int CMD_TIMEOUT  = -2;
 
+	//define application specific variables
 	SendingThread mSendingThread;
 	volatile byte[] mBuffer;
 	ProgressBar mProgressBar1;
@@ -54,182 +46,100 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 	String mPingResponse;
 	String mActiveCmd;
 	TextView mAnalogLightValue;
-	volatile String mReceptionBuffer;
-	volatile StringBuffer mStringBuffer;
-	volatile String mExpectedResult;
 	volatile boolean mIsExpectedResult;
 	volatile boolean mShowSerialInput;
 	volatile int mTimeout;
 
-	public void setUIDisabled() {
-		mButtonSerial.setEnabled(false);
-	}
-
-	public void setUIEnabled() {
-		mButtonSerial.setEnabled(true);
-	}
-	
-	private void setupKeyGuardPower() {
-	    PowerManager.WakeLock wl;
-	    
-        try {
-            Log.w(TAG, "Disabling keyguard");
-            KeyguardManager keyguardManager = (KeyguardManager)getSystemService(Activity.KEYGUARD_SERVICE);
-            KeyguardLock lock = keyguardManager.newKeyguardLock(KEYGUARD_SERVICE);
-            lock.disableKeyguard();
-        } catch (Exception ex) {
-            Log.e(TAG, ex.getStackTrace().toString());
-            ex.printStackTrace();
-        }
-        
-        try {
-            Log.w(TAG, "Acquiring wake lock");
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-            wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "My Tag");
-        } catch (Exception ex) {
-            Log.e(TAG, ex.getStackTrace().toString());
-            ex.printStackTrace();
-        }
-	}
-
-	@Override
+// override the onCreate method of "SerialPortActivity"
+	@Override 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-        //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-        //WindowManager.LayoutParams.FLAG_FULLSCREEN);
- 
-		setContentView(R.layout.networked_serial_activity);
-		mBuffer = new byte[1024];
-		mStringBuffer = new StringBuffer(500000);
-		mShowSerialInput = true;
+		requestWindowFeature(Window.FEATURE_NO_TITLE);// hide the title bar
+         
+		setContentView(R.layout.networked_serial_activity);// reference the layout .xml file
+		mBuffer = new byte[1024];//instantiate mBuffer
+		mShowSerialInput = true;//instantiate mShowSerialInput to "true"
 		
-		setupKeyGuardPower();
+		mProgressBar1 = (ProgressBar) findViewById(R.id.ProgressBar2);//instantiate
+		mAnalogLightValue = (TextView) findViewById(R.id.textView1);//instantiate
 		
-		mProgressBar1 = (ProgressBar) findViewById(R.id.ProgressBar2);
-		mAnalogLightValue = (TextView) findViewById(R.id.textView1);
-		
-		mButtonSerial = (Button)findViewById(R.id.ButtonSerial);
-		mButtonSerial.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
+		mButtonSerial = (Button)findViewById(R.id.ButtonSerial);//instantiate
+		mButtonSerial.setOnClickListener(new View.OnClickListener() {  //set the button as waiting for click
+			public void onClick(View v) { //logic method when a button is pressed
 				if (mSerialPort != null) {
-					if (mButtonSerial.getText().equals("LED On")) {
-						new ExecuteCommandTask().execute("a");
-						mButtonSerial.setText("LED Off");
-//						Toast.makeText(getApplicationContext(), "LED On!", 1).show();
+					if (mButtonSerial.getText().equals("LED On")) {  //the button was pressed while the text on the button reads, "LED On"
+						new ExecuteCommandTask().execute("a");  //send the character, "a" to the Arduino (this will turn on the Arduino's LED
+						mButtonSerial.setText("LED Off");  //write the text, "LED Off" onto the button in the app's GUI
+//						Toast.makeText(getApplicationContext(), "LED On!", 1).show();//show pop-up status message
 						
 					}
 					else {
-						new ExecuteCommandTask().execute("b");
-						mButtonSerial.setText("LED On");
-//						Toast.makeText(getApplicationContext(), "LED Off!", 1).show();
+						new ExecuteCommandTask().execute("b"); //send the character, "b" to the Arduino (this will turn off the Arduino's LED
+						mButtonSerial.setText("LED On");  //write the text, "LED On" onto the button in the app's GUI
+//						Toast.makeText(getApplicationContext(), "LED Off!", 1).show();//show pop-up status message
 						
 					}
 				} else {
-					Toast.makeText(getApplicationContext(), "Error: serial not ready", 1).show();
+					Toast.makeText(getApplicationContext(), "Error: serial not ready", 1).show();// error logic for when the port can not be found
 				}
 			}
 		});  
 		  		
-		this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); 
 	}
-
+// define the background asynchronous task to send the instructions to Arduino
 	private class ExecuteCommandTask extends AsyncTask<String, Integer, Boolean> {
 
-		protected void onPreExecute() {
-			setUIDisabled();
-		}
 
 		protected void send(String cmd) {
 			/* Prepare the command */	
-			mReceptionBuffer = "";
-			mStringBuffer.delete(0, mStringBuffer.length());
-			mIsExpectedResult = false;
-			mBuffer = cmd.getBytes();
+			mBuffer = cmd.getBytes(); //get the command
 
-			Log.d(TAG, "Sending '" + cmd + "'");
-			mSendingThread = new SendingThread();
-			mSendingThread.start();
+			Log.d(TAG, "Sending '" + cmd + "'"); //LogCat logic for debug
+			mSendingThread = new SendingThread(); //prepare the new thread for sending the commands to the Arduino
+			mSendingThread.start();// send the commands to the Arduino
 		}
 
-		protected void setTimeout(int ms) {
+		protected void setTimeout(int ms) { //set the timeout for the sending (in case the serial port does not respond)
 			mTimeout = ms;
 		}
 		
-		public boolean prepareLocalDirectory(String path) {
-			File dir = new File(path);
-			Util.deleteEntireDirectory(dir);
-			dir.mkdirs();
-			
-			return true;
-		}
 
-		protected Boolean doInBackground(String... cmd) {
-			boolean r = true;
-			
-			mActiveCmd = cmd[0];
-            
-			prepareLocalDirectory(mLocalDir);
-            
-            if (mActiveCmd.equals("a")) {
-                int count = 1;
-            	while(count-- > 0) {
-            		send("a");
-            	};
-                setTimeout(3000);
-            } else if (mActiveCmd.equals("b")) {
-                int count = 1;
-            	while(count-- > 0) {
-            		send("b");
-            	};
-                setTimeout(3000);
+		protected Boolean doInBackground(String... cmd) { //execute this method in the background
+			mActiveCmd = cmd[0]; // get the commands and stored in the mActiveCmd variable
+            if (mActiveCmd.equals("a")) { // if the Command equals "a", i.e. turning on the LED
+                send("a"); // send the character "a" to the Arduino
+                setTimeout(3000); // set the Timeout to 3000ms in case the serial port does not respond
+            } else if (mActiveCmd.equals("b")) { // if the Command equals "b", i.e. turning off the LED
+                send("b"); // send the character "b" to the Arduino
+                setTimeout(3000); // set the Timeout to 3000ms in case the serial port does not respond
+            } else {
+            	return false; // return false, i.e. failure
             }
-			return r;
-		}
-
-		protected void onProgressUpdate(Integer... progress) {
-			
-			//Handle the UI progress
-			if (progress[0] == CMD_SUCCESS) {
-				Toast.makeText(getApplicationContext(), "Success!", 1).show();
-			} else if (progress[0] == CMD_TIMEOUT){
-			    //do nothing
-				//Toast.makeText(getApplicationContext(), "Error: timeout running command.", 1).show();
-			} else {
-				//just update the UI with some progress.
-			}
-		}
-
-		protected void onPostExecute(Boolean result) {
-			setUIEnabled();
+			return true; // return true, i.e. success
 		}
 	}
 
 	private class SendingThread extends Thread {
 		@Override
 		public void run() {
-			if (mOutputStream == null)
-				return;
-
-			try {
-				mOutputStream.write(mBuffer);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
+			if (mOutputStream == null) // if serial port cannot be found
+				return; // return without doing anything
+			//if serial port exists
+			try { // TRY to write to the port without overriding wrong port
+				mOutputStream.write(mBuffer);  // execute write
+			} catch (IOException e) {  // catch the exceptions when happened.
 				e.printStackTrace();
 			}
 		}
 	}
 
-	protected void onDataReceived(final byte[] buffer, final int size) {
+	// this method is called when a new data byte array is received
+	protected void onDataReceived(final byte[] buffer, final int size) { 
 		runOnUiThread(new Runnable() {
-			public void run() {
-				if (mStringBuffer == null)
-					return;
-				mStringBuffer.append(new String(buffer, 0, size));
-				mProgressBar1.setProgress(Integer.parseInt(new String(buffer, 0, size)));
-				mAnalogLightValue.setText("Analog Light Value: " + (new String(buffer, 0, size)));
+			public void run() { // 
+				mProgressBar1.setProgress(Integer.parseInt(new String(buffer, 0, size))); // set the progress bar to the new received data 
+				mAnalogLightValue.setText("Analog Light Value: " + (new String(buffer, 0, size))); // update the text displayed on the screen
 			}
 		});
 	}
