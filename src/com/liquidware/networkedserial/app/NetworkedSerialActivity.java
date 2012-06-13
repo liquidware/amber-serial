@@ -46,8 +46,8 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 	String mPingResponse;
 	String mActiveCmd;
 	TextView mAnalogLightValue;
-	volatile boolean mIsExpectedResult;
-	volatile boolean mShowSerialInput;
+//	volatile boolean mIsExpectedResult;
+//	volatile boolean mShowSerialInput;
 	volatile int mTimeout;
 
 // override the onCreate method of "SerialPortActivity"
@@ -59,9 +59,10 @@ public class NetworkedSerialActivity extends SerialPortActivity {
          
 		setContentView(R.layout.networked_serial_activity);// reference the layout .xml file
 		mBuffer = new byte[1024];//instantiate mBuffer
-		mShowSerialInput = true;//instantiate mShowSerialInput to "true"
+//		mShowSerialInput = true;//instantiate mShowSerialInput to "true"
 		
-		mProgressBar1 = (ProgressBar) findViewById(R.id.ProgressBar2);//instantiate
+		// find the ProgressBar on the view by id, which has an id of R.id.ProgressBar2
+		mProgressBar1 = (ProgressBar) findViewById(R.id.ProgressBar2);
 		mAnalogLightValue = (TextView) findViewById(R.id.textView1);//instantiate
 		
 		mButtonSerial = (Button)findViewById(R.id.ButtonSerial);//instantiate
@@ -72,25 +73,21 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 						new ExecuteCommandTask().execute("a");  //send the character, "a" to the Arduino (this will turn on the Arduino's LED
 						mButtonSerial.setText("LED Off");  //write the text, "LED Off" onto the button in the app's GUI
 //						Toast.makeText(getApplicationContext(), "LED On!", 1).show();//show pop-up status message
-						
 					}
 					else {
 						new ExecuteCommandTask().execute("b"); //send the character, "b" to the Arduino (this will turn off the Arduino's LED
 						mButtonSerial.setText("LED On");  //write the text, "LED On" onto the button in the app's GUI
 //						Toast.makeText(getApplicationContext(), "LED Off!", 1).show();//show pop-up status message
-						
 					}
 				} else {
 					Toast.makeText(getApplicationContext(), "Error: serial not ready", 1).show();// error logic for when the port can not be found
 				}
 			}
-		});  
-		  		
+		});  	  		
 	}
+	
 // define the background asynchronous task to send the instructions to Arduino
 	private class ExecuteCommandTask extends AsyncTask<String, Integer, Boolean> {
-
-
 		protected void send(String cmd) {
 			/* Prepare the command */	
 			mBuffer = cmd.getBytes(); //get the command
@@ -103,7 +100,6 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 		protected void setTimeout(int ms) { //set the timeout for the sending (in case the serial port does not respond)
 			mTimeout = ms;
 		}
-		
 
 		protected Boolean doInBackground(String... cmd) { //execute this method in the background
 			mActiveCmd = cmd[0]; // get the commands and stored in the mActiveCmd variable
@@ -137,7 +133,7 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 	// this method is called when a new data byte array is received
 	protected void onDataReceived(final byte[] buffer, final int size) { 
 		runOnUiThread(new Runnable() {
-			public void run() { // 
+			public void run() { 
 				mProgressBar1.setProgress(Integer.parseInt(new String(buffer, 0, size))); // set the progress bar to the new received data 
 				mAnalogLightValue.setText("Analog Light Value: " + (new String(buffer, 0, size))); // update the text displayed on the screen
 			}
