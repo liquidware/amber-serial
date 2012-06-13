@@ -167,16 +167,18 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 		mButtonSerial = (Button)findViewById(R.id.ButtonSerial);
 		mButtonSerial.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				Toast.makeText(getApplicationContext(), "Performing serial send!", 1).show();
-				
 				if (mSerialPort != null) {
 					if (mButtonSerial.getText().equals("LED On")) {
 						new ExecuteCommandTask().execute("a");
 						mButtonSerial.setText("LED Off");
+//						Toast.makeText(getApplicationContext(), "LED On!", 1).show();
+						
 					}
 					else {
 						new ExecuteCommandTask().execute("b");
 						mButtonSerial.setText("LED On");
+//						Toast.makeText(getApplicationContext(), "LED Off!", 1).show();
+						
 					}
 				} else {
 					Toast.makeText(getApplicationContext(), "Error: serial not ready", 1).show();
@@ -321,13 +323,13 @@ public class NetworkedSerialActivity extends SerialPortActivity {
                 }
                 
             } else if (mActiveCmd.equals("a")) {
-                int count = 2;
+                int count = 1;
             	while(count-- > 0) {
             		send("a");
             	};
                 setTimeout(3000);
             } else if (mActiveCmd.equals("b")) {
-                int count = 2;
+                int count = 1;
             	while(count-- > 0) {
             		send("b");
             	};

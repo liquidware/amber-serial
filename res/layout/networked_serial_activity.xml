@@ -6,18 +6,34 @@
     android:background="@drawable/semi_black" android:weightSum="3">
 
     <LinearLayout
-        android:id="@+id/linearLayout1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
         android:background="@drawable/semi_black" >
 
         <TextView
             android:id="@+id/textView1"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
             android:text="Analog Light Value: 0"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="50px" />
 
     </LinearLayout>
 
@@ -67,16 +83,17 @@
         android:id="@+id/linearLayout2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
         android:layout_weight="1"
-        android:background="@drawable/semi_black" >
+        android:background="@drawable/semi_black">
 
         <Button
             android:id="@+id/ButtonSerial"
             style="@style/ActionButton"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="LED On" />
+            android:layout_gravity="center"
+            android:text="LED On" android:textSize="50px" android:layout_margin="40px"/>
 
         <Button
             android:id="@+id/ButtonSound"
@@ -101,6 +118,7 @@
             android:layout_weight="1"
             android:text="liquidware.com"
             android:visibility="gone" />
+
     </LinearLayout>
 
 </LinearLayout>
