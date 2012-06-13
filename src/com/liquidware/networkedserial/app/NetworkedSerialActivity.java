@@ -16,58 +16,25 @@
 
 package com.liquidware.networkedserial.app;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.net.*;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import android.app.Activity;
 import android.app.KeyguardManager;
 import android.app.KeyguardManager.KeyguardLock;
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
-import android.os.SystemClock;
-import android.util.Base64;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.TranslateAnimation;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ViewFlipper;
-import android.widget.TextView.OnEditorActionListener;
 import com.liquidware.networkedserial.app.R;
 
 public class NetworkedSerialActivity extends SerialPortActivity {
@@ -80,21 +47,13 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 
 	SendingThread mSendingThread;
 	volatile byte[] mBuffer;
-	static TextView mReception;
-	EditText mPingIP;
-	ScrollView mScroller;
-	ProgressBar mProgressBar;
 	ProgressBar mProgressBar1;
 	ImageButton mImage1;
 	ImageButton mImage2;
 	Button mButtonSerial;
-	Button mButtonBeep;
-	TextView mTextViewIP;
-	String mPingUrl;
 	String mPingResponse;
 	String mActiveCmd;
 	TextView mAnalogLightValue;
-	public static Button mButtonPing;
 	volatile String mReceptionBuffer;
 	volatile StringBuffer mStringBuffer;
 	volatile String mExpectedResult;
@@ -104,18 +63,10 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 
 	public void setUIDisabled() {
 		mButtonSerial.setEnabled(false);
-		mButtonPing.setEnabled(false);
-		mButtonBeep.setEnabled(false);
-		mProgressBar.setVisibility(ProgressBar.VISIBLE);
-		mProgressBar.setProgress(0);
 	}
 
 	public void setUIEnabled() {
 		mButtonSerial.setEnabled(true);
-		mButtonPing.setEnabled(true);
-		mButtonBeep.setEnabled(true);
-		mProgressBar.setVisibility(ProgressBar.INVISIBLE);
-		mProgressBar.setProgress(0);  
 	}
 	
 	private void setupKeyGuardPower() {
@@ -157,11 +108,7 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 		
 		setupKeyGuardPower();
 		
-		mReception = (TextView) findViewById(R.id.TextViewReception);
-		mScroller = (ScrollView) findViewById(R.id.scroller);
-		mProgressBar = (ProgressBar) findViewById(R.id.ProgressBar1);
 		mProgressBar1 = (ProgressBar) findViewById(R.id.ProgressBar2);
-		mPingIP = (EditText) findViewById(R.id.EditTextPingIP);
 		mAnalogLightValue = (TextView) findViewById(R.id.textView1);
 		
 		mButtonSerial = (Button)findViewById(R.id.ButtonSerial);
@@ -185,39 +132,7 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 				}
 			}
 		});  
-		  
-        mButtonBeep = (Button)findViewById(R.id.ButtonSound);
-        mButtonBeep.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-				Toast.makeText(getApplicationContext(), "Performing serial send!", 1).show();
-
-				if (mSerialPort != null) {
-					new ExecuteCommandTask().execute("b");
-				} else {
-					Toast.makeText(getApplicationContext(), "Error: serial not ready", 1).show();
-				}
-            }
-        });  
-		
-		mButtonPing = (Button)findViewById(R.id.ButtonPing); 
-		mButtonPing.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				Toast.makeText(getApplicationContext(), "Performing ping", 1).show();
-				
-				mPingUrl = "http://" + mPingIP.getText().toString();
-				mReception.append("Pinging server '" + mPingUrl + "'\n");
-				
-                if (mSerialPort != null) {
-                    new ExecuteCommandTask().execute("ping");
-                } else {
-                    Toast.makeText(getApplicationContext(), "Error: serial not ready", 1).show();
-                }
-			}
-		});
-		
-		mTextViewIP = (TextView)findViewById(R.id.TextViewNetworkIP);
-		mTextViewIP.setText(Util.getLocalIpAddress());
-		
+		  		
 		this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); 
 	}
 
@@ -242,49 +157,6 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 		protected void setTimeout(int ms) {
 			mTimeout = ms;
 		}
-
-		protected int getTimeout() {
-			return mTimeout;
-		}
-
-		protected boolean expect(String expected) {
-			int ms_count = 0;
-			mExpectedResult = expected;
-
-			/* Wait for the response */
-			while (!mIsExpectedResult) {
-
-				Log.d(TAG, "Scanning for '" + mExpectedResult + "' " + ms_count);
-				publishProgress(ms_count);
-
-				mReceptionBuffer = mStringBuffer.toString();
-				Log.d(TAG, "Response '" + mReceptionBuffer + "'");
-				if (mReceptionBuffer.contains(mExpectedResult)) {
-					mIsExpectedResult = true;
-					Log.d(TAG, "Expect found!");
-					publishProgress(CMD_SUCCESS);
-					break;
-				}
-
-				SystemClock.sleep(100);
-				ms_count = ms_count + 100;
-				if (ms_count > getTimeout()) {
-					Log.d(TAG, "Expect Timeout!");
-					publishProgress(CMD_TIMEOUT);
-					break;
-				}
-			}
-
-			return mIsExpectedResult;
-		}
-
-		protected boolean send_cmd(String cmd, String expect) {
-			boolean r;
-
-			send(cmd + "\n");
-			r = expect(expect);
-			return r;
-		}
 		
 		public boolean prepareLocalDirectory(String path) {
 			File dir = new File(path);
@@ -301,28 +173,7 @@ public class NetworkedSerialActivity extends SerialPortActivity {
             
 			prepareLocalDirectory(mLocalDir);
             
-            if (mActiveCmd.equals("hello")) {
-                int count = 10;
-                setTimeout(5000);
-                
-                //Say hello to any serial terminals
-                while (count-- > 0) {
-                    if (send_cmd("[" + count + "]" + 
-                            "Hello there, you serial device\r", "hi")) {
-                        //Response found, talk to me.
-                        setTimeout(20000);
-                        if (send_cmd("Talk to me, you have 30 seconds.\r\nType exit to quit.\r","exit")) {
-                            send("Goodbye.\r");
-                            count = 0;
-                            break;
-                        }
-                        send("Session timeout, goodbye.\r");
-                        count = 0;
-                        break;
-                    }
-                }
-                
-            } else if (mActiveCmd.equals("a")) {
+            if (mActiveCmd.equals("a")) {
                 int count = 1;
             	while(count-- > 0) {
             		send("a");
@@ -334,26 +185,11 @@ public class NetworkedSerialActivity extends SerialPortActivity {
             		send("b");
             	};
                 setTimeout(3000);
-            } else if (mActiveCmd.equals("ping")) {
-                mPingResponse = "";
-                setTimeout(3000);
-                
-                mPingResponse = Util.pingHttpUrl(mPingUrl);
-                publishProgress(1000);
-                mPingResponse = Util.pingHttpUrl(mPingUrl);
-                publishProgress(2000);
-                mPingResponse = Util.pingHttpUrl(mPingUrl);
-                publishProgress(3000);
             }
 			return r;
 		}
 
 		protected void onProgressUpdate(Integer... progress) {
-			mProgressBar.setMax(getTimeout());
-			mProgressBar.setProgress(progress[0]);
-			if (mShowSerialInput && mActiveCmd.equals("hello"))
-				mReception.setText(mReceptionBuffer);
-			mScroller.smoothScrollTo(0, mReception.getBottom());
 			
 			//Handle the UI progress
 			if (progress[0] == CMD_SUCCESS) {
@@ -363,9 +199,6 @@ public class NetworkedSerialActivity extends SerialPortActivity {
 				//Toast.makeText(getApplicationContext(), "Error: timeout running command.", 1).show();
 			} else {
 				//just update the UI with some progress.
-			    if (mActiveCmd.equals("ping")) {
-			        mReception.append(mPingResponse);
-			    }
 			}
 		}
 

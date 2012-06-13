@@ -33,36 +33,9 @@
             android:gravity="center_horizontal"
             android:text="Analog Light Value: 0"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textSize="50px" />
+            android:textSize="50dp" />
 
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/TextViewNetworkIP"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Network IP: " android:lines="3" android:visibility="gone"/>
-
-    <ProgressBar
-        android:id="@+id/ProgressBar1" 
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:max="6000"
-        android:visibility="gone" />
-    
-    <ScrollView
-        android:id="@+id/scroller"
-        android:layout_width="fill_parent"
-        android:layout_height="400px"
-        android:layout_weight="0.50" android:visibility="gone">
-
-        <TextView
-            android:id="@+id/TextViewReception"
-            android:layout_width="fill_parent"
-            android:layout_height="match_parent"
-            android:paddingBottom="8dip" />
-    </ScrollView>
 
     <LinearLayout
         android:id="@+id/linearLayout3"
@@ -93,31 +66,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:text="LED On" android:textSize="50px" android:layout_margin="40px"/>
-
-        <Button
-            android:id="@+id/ButtonSound"
-            style="@style/ActionButton"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="LED Off" android:visibility="gone"/>
-
-        <Button
-            android:id="@+id/ButtonPing"
-            style="@style/ActionButton"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="LED Off" android:visibility="gone"/>
-        
-        <EditText
-            android:id="@+id/EditTextPingIP"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="liquidware.com"
-            android:visibility="gone" />
+            android:text="LED On" 
+            android:textSize="50dp" 
+            android:layout_margin="40dp"/>
 
     </LinearLayout>
 
