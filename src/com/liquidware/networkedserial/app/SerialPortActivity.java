@@ -27,7 +27,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
 import android_serialport_api.SerialPort;
-import com.liquidware.networkedserial.app.R;
+import com.liquidware.amberserial.app.R;
 
 public abstract class SerialPortActivity extends Activity {
 

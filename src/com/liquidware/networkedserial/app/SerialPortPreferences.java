@@ -22,7 +22,7 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android_serialport_api.SerialPortFinder;
-import com.liquidware.networkedserial.app.R;
+import com.liquidware.amberserial.app.R;
 
 public class SerialPortPreferences extends PreferenceActivity {
 

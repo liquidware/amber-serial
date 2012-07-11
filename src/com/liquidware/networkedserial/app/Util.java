@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import com.liquidware.amberserial.app.R;
 
 public class Util {
 	private static final String TAG = "Util";

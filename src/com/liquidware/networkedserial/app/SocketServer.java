@@ -6,7 +6,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -37,19 +36,18 @@ public class SocketServer extends AsyncTask<String, Integer, Boolean> implements
                 socket = serverSocket.accept();
                 dataInputStream = new DataInputStream(socket.getInputStream());
                 dataOutputStream = new DataOutputStream(socket.getOutputStream());
+
                 Log.d(TAG, "ip: " + socket.getInetAddress());
-                //Log.d(TAG, "message: " + dataInputStream.readUTF());
-                dataOutputStream.writeUTF("Hello!");
+                dataOutputStream.writeUTF("Hello!\r\n");
+
                 while (true) {
-                    byte[] buff = { 0 };
                     try {
-                        int count = dataInputStream.read(buff);
-                        if (count > 0) {
-                            String m = new String(buff);
-                            mNotifier.onSocketDataReceived(m);
-                        }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
+                        String m = dataInputStream.readLine();
+                        if (m == null)
+                            break;
+                        mNotifier.onSocketDataReceived(m);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                         break;
                     }
                 }
@@ -89,7 +87,7 @@ public class SocketServer extends AsyncTask<String, Integer, Boolean> implements
         //Send the message to the socket
         try {
             if (dataOutputStream != null)
-                dataOutputStream.writeUTF(msg);
+                dataOutputStream.writeUTF(msg + "\r\n");
         } catch (IOException e) {
             e.printStackTrace();
         }

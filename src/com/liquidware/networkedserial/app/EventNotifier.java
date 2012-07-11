@@ -1,5 +1,6 @@
 package com.liquidware.networkedserial.app;
 
+import com.liquidware.amberserial.app.R;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class EventNotifier {

@@ -4,6 +4,7 @@ package com.liquidware.networkedserial.app;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import com.liquidware.amberserial.app.R;
 
 public class BootUpReceiver extends BroadcastReceiver {
 

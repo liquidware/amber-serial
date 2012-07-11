@@ -28,7 +28,7 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.liquidware.networkedserial.app.R;
+import com.liquidware.amberserial.app.R;
 
 //Main activity (top level)
 public class NetworkedSerialActivity extends SerialPortActivity implements Event {
