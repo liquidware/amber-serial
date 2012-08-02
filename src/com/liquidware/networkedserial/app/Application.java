@@ -24,7 +24,6 @@ import java.security.InvalidParameterException;
 import android.content.SharedPreferences;
 import android_serialport_api.SerialPort;
 import android_serialport_api.SerialPortFinder;
-import com.liquidware.amberserial.app.R;
 
 public class Application extends android.app.Application {
 

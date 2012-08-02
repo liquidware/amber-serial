@@ -16,6 +16,7 @@ public class SocketServer extends AsyncTask<String, Integer, Boolean> implements
     DataInputStream dataInputStream = null;
     DataOutputStream dataOutputStream = null;
     EventNotifier mNotifier;
+    boolean mListening = false;
 
     public SocketServer(EventNotifier notifier, int port) {
         //Listen for events
@@ -23,6 +24,7 @@ public class SocketServer extends AsyncTask<String, Integer, Boolean> implements
         mNotifier.addListener(this);
         try {
             serverSocket = new ServerSocket(port);
+            mListening = true;
             Log.d(TAG, "Listening :" + port);
         } catch (IOException e) {
             e.printStackTrace();
@@ -33,6 +35,8 @@ public class SocketServer extends AsyncTask<String, Integer, Boolean> implements
     protected Boolean doInBackground(String... msg) {
         while (true) {
             try {
+                if (!mListening)
+                    return false;
                 socket = serverSocket.accept();
                 dataInputStream = new DataInputStream(socket.getInputStream());
                 dataOutputStream = new DataOutputStream(socket.getOutputStream());

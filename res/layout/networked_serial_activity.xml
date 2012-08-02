@@ -3,7 +3,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" 
-    android:background="@drawable/semi_black" android:weightSum="3">
+    android:background="@drawable/semi_black" android:weightSum="4">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,7 +14,7 @@
         <TextView
             android:id="@+id/textView2"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:textAppearance="?android:attr/textAppearanceLarge" />
 
     </LinearLayout>
@@ -24,16 +24,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        android:background="@drawable/semi_black" >
+        android:background="@drawable/semi_black" android:layout_weight="1">
 
         <TextView
             android:id="@+id/textView1"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="fill_parent"
             android:gravity="center_horizontal"
             android:text="Analog Light Value: 0"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textSize="50dp" />
+            android:textSize="50dip" />
 
     </LinearLayout>
 
@@ -47,7 +47,7 @@
             android:id="@+id/ProgressBar2"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:max="600" />
 
     </LinearLayout>
@@ -56,9 +56,8 @@
         android:id="@+id/linearLayout2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
         android:layout_weight="1"
-        android:background="@drawable/semi_black">
+        android:background="@drawable/semi_black" >
 
         <Button
             android:id="@+id/ButtonSerial"
@@ -66,10 +65,21 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:text="LED On" 
-            android:textSize="50dp" 
-            android:layout_margin="40dp"/>
+            android:text="LED On"
+            android:textSize="50dp" />
+    </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/TextView01"
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
     </LinearLayout>
 
 </LinearLayout>
