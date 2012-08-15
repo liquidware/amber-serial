@@ -18,8 +18,12 @@ package com.liquidware.networkedserial.app;
 
 
 import java.io.IOException;// import needed packages
+
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -27,7 +31,6 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.liquidware.amberserial.app.R;
 
 //Main activity (top level)
@@ -46,16 +49,21 @@ public class NetworkedSerialActivity extends SerialPortActivity implements Event
 	TextView mAnalogLightValue;
 	volatile int mTimeout;
 	EventNotifier mNotifier;
+	View mAlertDlg;
+	Handler mHandler = new Handler();
+	Context mContext;
 
 // override the onCreate method of "SerialPortActivity"
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		mContext = this.getBaseContext();
 
 		requestWindowFeature(Window.FEATURE_NO_TITLE);// hide the title bar
 
 		setContentView(R.layout.networked_serial_activity);// reference the layout .xml file
-		mBuffer = new byte[1024];//instantiate mBuffer
+
+		mBuffer = new byte[10/24];//instantiate mBuffer
 
 		// find the ProgressBar on the view by id, which has an id of R.id.ProgressBar2
 		mProgressBar1 = (ProgressBar) findViewById(R.id.ProgressBar2);
@@ -64,7 +72,8 @@ public class NetworkedSerialActivity extends SerialPortActivity implements Event
 		mButtonSerial = (Button)findViewById(R.id.ButtonSerial);//instantiate
 		mButtonSerial.setOnClickListener(new View.OnClickListener() {  //set the button as waiting for click
 			public void onClick(View v) { //logic method when a button is pressed
-				if (mSerialPort != null) {
+			    mAlertDlg.setVisibility(View.VISIBLE);
+			    try {
 					if (mButtonSerial.getText().equals("LED On")) {  //the button was pressed while the text on the button reads, "LED On"
 						new ExecuteCommandTask().execute("a");  //send the character, "a" to the Arduino (this will turn on the Arduino's LED
 						mButtonSerial.setText("LED Off");  //write the text, "LED Off" onto the button in the app's GUI
@@ -73,13 +82,16 @@ public class NetworkedSerialActivity extends SerialPortActivity implements Event
 						new ExecuteCommandTask().execute("b"); //send the character, "b" to the Arduino (this will turn off the Arduino's LED
 						mButtonSerial.setText("LED On");  //write the text, "LED On" onto the button in the app's GUI
 					}
-				} else {
-					Toast.makeText(getApplicationContext(), "Error: serial not ready", 1).show();// error logic for when the port can not be found
-				}
+			    } catch(Exception ex) {
+			        Log.e(TAG, "Error setting LED");
+			    }
 			}
 		});
 
 		mNotifier = new EventNotifier(this);
+	    mAlertDlg = findViewById(R.id.alertDialog);
+	    mUpdateTimeTask.run();
+
 		//Start the socket server on port 888
 		new SocketServer(mNotifier, 8888).execute("");
 	}
@@ -129,26 +141,92 @@ public class NetworkedSerialActivity extends SerialPortActivity implements Event
 		}
 	}
 
+    static final int NIGHT_TRIP_POINT = 400;
+    static final int DAY_TRIP_POINT = 550;
+    static final int DAY = 1;
+    static final int NIGHT = 0;
+
+    int time = DAY;
+    int prevTime = DAY;
+
+    int ratchetCounter = 2;
+    int ratchetMin = 0;
+    int ratchetMax = 4;
+
+    int mTweetIndex = 0;
+    String [] mTweets = {
+            "Yum.",
+            "Fish are friends, not food!",
+            "I am a nice shark, not a mindless eating machine.",
+            "Anchor! Chum!",
+            "So, what's a couple of bites like you doing out so late?"
+            };
+
 	// this method is called when a new data byte array is received
 	@Override
     protected void onDataReceived(final byte[] buffer, final int size) {
-		runOnUiThread(new Runnable() {
-			public void run() {
-			    String msg = new String(buffer, 0, size);
-			    int val = 0;
-			    try {
-			        val = Integer.parseInt(msg);
-			    } catch (Exception ex) {
-			    }
-				mProgressBar1.setProgress(val); // set the progress bar to the new received data
-				mAnalogLightValue.setText("Analog Light Value: " + (new String(buffer, 0, size))); // update the text displayed on the screen
-				//Post the message to the socket
-		        mNotifier.onSocketDataTransmit(new String(buffer, 0, size));
-			}
-		});
+        runOnUiThread(new Runnable() {
+            public void run() {
+                String msg = new String(buffer, 0, size);
+                int sensorVal;
+                try {
+                    // Format the message as
+                    sensorVal = Integer.parseInt(msg.split("=")[1].trim());
 
+                    if ( (sensorVal < NIGHT_TRIP_POINT) && (ratchetCounter > ratchetMin))
+                        ratchetCounter--;
 
+                    if (ratchetCounter == ratchetMin)
+                        time = NIGHT;
+
+                    if ((sensorVal > DAY_TRIP_POINT) && (ratchetCounter < ratchetMax))
+                        ratchetCounter++;
+
+                    if (ratchetCounter == ratchetMax)
+                        time = DAY;
+
+                    Log.d(TAG, "val=" + sensorVal + " time=" + time + " prevTime=" + prevTime);
+
+                    if ((time == NIGHT) && (prevTime == DAY)) {
+                        mAlertDlg.setVisibility(View.VISIBLE);
+
+                        mTweetIndex++;
+                        if (mTweetIndex >= mTweets.length)
+                            mTweetIndex = 0;
+
+                        Tweet tweet = new Tweet(mTweets[mTweetIndex] + " [" + SystemClock.uptimeMillis() + "]");
+
+                        new Sound(mContext).play("/sdcard/rooster.mp3");
+                    }
+
+                prevTime = time;
+
+                    mProgressBar1.setProgress(sensorVal); // set the progress bar to
+                                                    // the new received data
+                    mAnalogLightValue.setText("Analog Light Value: " + sensorVal); // update the on screen text
+
+                    // Post the message to the socket
+                    mNotifier.onSocketDataTransmit(new String(buffer, 0, size));
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
 	}
+
+    /**
+     * A global application clock ticker
+     */
+    private final Runnable mUpdateTimeTask = new Runnable() {
+        public void run() {
+            long millisUpTime = SystemClock.uptimeMillis();
+
+            Log.d(TAG,  "tick");
+            mNotifier.onTimerTick(millisUpTime);
+
+            mHandler.postAtTime(this, millisUpTime + 5000);
+        }
+    };
 
 	// called when data arrives through the network socket
     public void onSocketDataReceived(String msg) {
@@ -161,5 +239,11 @@ public class NetworkedSerialActivity extends SerialPortActivity implements Event
     }
 
     public void onTimerTick(long millisUpTime) {
+        try {
+            if (mAlertDlg.getVisibility() == View.VISIBLE) {
+                mAlertDlg.setVisibility(View.GONE);
+            }
+        } catch (Exception ex) {
+        }
     }
 }
